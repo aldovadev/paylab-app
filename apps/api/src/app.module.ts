@@ -1,0 +1,49 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import * as Joi from 'joi';
+import { PaymentModule } from './payment/payment.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { GatewaysModule } from './gateways/gateways.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '../../.env',
+      validationSchema: Joi.object({
+        APP_NAME: Joi.string().default('pay-gate-simulator'),
+        APP_ENV: Joi.string().valid('dev', 'staging', 'production').default('dev'),
+        APP_PORT: Joi.number().default(3100),
+        ENABLE_SWAGGER: Joi.string().default('true'),
+        DB_HOST: Joi.string().default('localhost'),
+        DB_PORT: Joi.number().default(5432),
+        DB_USERNAME: Joi.string().default('postgres'),
+        DB_PASSWORD: Joi.string().required(),
+        DB_DATABASE: Joi.string().default('pay_gate_simulator'),
+        DB_SSL: Joi.string().default('false'),
+        REDIS_HOST: Joi.string().default('localhost'),
+        REDIS_PORT: Joi.number().default(6379),
+      }),
+    }),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get('DB_HOST'),
+        port: config.get<number>('DB_PORT'),
+        username: config.get('DB_USERNAME'),
+        password: config.get('DB_PASSWORD'),
+        database: config.get('DB_DATABASE'),
+        ssl: config.get('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
+        autoLoadEntities: true,
+        synchronize: config.get('APP_ENV') === 'dev',
+        logging: config.get('APP_ENV') === 'dev' ? ['error'] : false,
+      }),
+    }),
+    GatewaysModule,
+    PaymentModule,
+    WebhooksModule,
+  ],
+})
+export class AppModule {}

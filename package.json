@@ -1,0 +1,26 @@
+{
+  "name": "pay-gate-simulator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-gateway payment simulator with sandbox and mock modes",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rimraf node_modules",
+    "tunnel": "ngrok http --url=hedgehog-advanced-willingly.ngrok-free.app 3100"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "rimraf": "^6.0.1"
+  },
+  "packageManager": "npm@10.9.3",
+  "engines": {
+    "node": ">=20"
+  }
+}

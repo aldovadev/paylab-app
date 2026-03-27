@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: paygate-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paygate
+      POSTGRES_PASSWORD: paygate_secret
+      POSTGRES_DB: paygate_simulator
+    ports:
+      - "5450:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paygate -d paygate_simulator"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: paygate-redis
+    restart: unless-stopped
+    ports:
+      - "6390:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "3100:3100"
+    environment:
+      APP_PORT: 3100
+      ENABLE_SWAGGER: true
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: paygate
+      DB_PASSWORD: paygate_secret
+      DB_DATABASE: paygate_simulator
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-}
+      PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID:-}
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3200:3200"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:3100/api
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
