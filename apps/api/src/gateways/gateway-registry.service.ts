@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { PaymentProvider, PaymentGatewayAdapter } from '@pay-gate-simulator/shared';
+import { PaymentProvider, PaymentGatewayAdapter } from '@paylab/shared';
 import { StripeAdapter } from './stripe/stripe.adapter';
 import { PaypalAdapter } from './paypal/paypal.adapter';
 

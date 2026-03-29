@@ -17,10 +17,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Pay Gate Simulator",
-    template: "%s | Pay Gate Simulator",
+    default: "PayLab",
+    template: "%s | PayLab",
   },
-  description: "Payment gateway simulation dashboard for Stripe and PayPal",
+  description: "Multi-gateway payment simulator for Stripe and PayPal",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

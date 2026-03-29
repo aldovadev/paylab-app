@@ -11,7 +11,7 @@ import {
 import {
   PaymentProvider,
   PaymentMethod,
-} from '@pay-gate-simulator/shared';
+} from '@paylab/shared';
 
 export class CreateChargeDto {
   @ApiProperty({ enum: PaymentProvider })

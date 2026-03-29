@@ -1,32 +1,62 @@
-# Pay Gate Simulator
+<div align="center">
 
-A full-stack payment gateway simulation platform for testing Stripe and PayPal integrations in sandbox environments. Built as a monorepo with a NestJS API backend and Next.js dashboard frontend.
+<img src="apps/web/public/logos/paylab.svg" alt="PayLab" width="80" height="80" />
 
-## Overview
+# PayLab
 
-Pay Gate Simulator provides a controlled environment to test real payment gateway APIs without processing actual transactions. It connects to Stripe Test Mode and PayPal Sandbox, executing real API calls against their test environments to validate integration logic, error handling, and webhook delivery.
+Multi-gateway payment simulator for Stripe and PayPal.
 
-### Key Features
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![NestJS](https://img.shields.io/badge/NestJS-11-e0234e.svg)](https://nestjs.com)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000.svg)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6.svg)](https://www.typescriptlang.org)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ed.svg)](https://docs.docker.com/compose)
 
-- **Multi-Gateway Support** - Stripe and PayPal with a unified adapter interface
-- **20 Pre-Built Test Scenarios** - 10 Stripe + 10 PayPal covering success, decline, and error cases
-- **PayPal Negative Testing** - Uses `PayPal-Mock-Response` headers to simulate capture-time and create-time failures
-- **Stripe Test Cards** - Full catalog of Stripe test PaymentMethod tokens for various outcomes
-- **Webhook Processing** - Receives and verifies webhooks from both gateways via ngrok tunnel
-- **Real-Time Dashboard** - Monitor transactions, webhook events, and gateway metrics
-- **Docker-Ready** - Full-stack deployment with a single `docker compose up`
+</div>
 
-## Tech Stack
+## Table of Contents
+
+- [About](#about)
+- [Built With](#built-with)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Test Scenarios](#test-scenarios)
+- [API Endpoints](#api-endpoints)
+- [Architecture](#architecture)
+- [Google OAuth (Optional)](#google-oauth-optional)
+- [Environment Variables](#environment-variables)
+- [Development Rules](#development-rules)
+- [License](#license)
+
+## About
+
+PayLab provides a controlled environment to test real payment gateway APIs without processing actual transactions. It connects to Stripe Test Mode and PayPal Sandbox, executing real API calls against their test environments to validate integration logic, error handling, and webhook delivery.
+
+## Built With
 
 | Layer | Technology |
 |-------|-----------|
 | **Monorepo** | Turborepo + npm workspaces |
 | **Backend** | NestJS 11, TypeORM, PostgreSQL 17, Redis 7 |
-| **Frontend** | Next.js 16 (App Router), Tailwind CSS v4, shadcn/ui, Redux Toolkit |
+| **Frontend** | Next.js 16 (App Router), Tailwind CSS v4, shadcn/ui, Magic UI, Redux Toolkit |
 | **Stripe** | Stripe SDK v17 (Test Mode) |
 | **PayPal** | PayPal Server SDK v2 (Sandbox) |
+| **Auth** | Google OAuth 2.0 (optional), Passport, JWT |
 | **Shared** | TypeScript types, enums, and interfaces package |
 | **Infra** | Docker Compose, ngrok (webhook tunneling) |
+
+## Features
+
+- **Animated Landing Page** - Particles background, AuroraText headings, and Magic UI components
+- **Multi-Gateway Support** - Stripe and PayPal with a unified adapter interface
+- **20 Pre-Built Test Scenarios** - 10 Stripe + 10 PayPal covering success, decline, and error cases
+- **PayPal Negative Testing** - Uses `PayPal-Mock-Response` headers to simulate capture-time and create-time failures
+- **Stripe Test Cards** - Full catalog of Stripe test PaymentMethod tokens for various outcomes
+- **Webhook Processing** - Receives and verifies webhooks from both gateways via ngrok tunnel
+- **Real-Time Dashboard** - Monitor transactions, webhook events, and gateway metrics with Magic UI cards
+- **Optional Google OAuth** - Protect dashboard with Google sign-in, enabled via environment flag
+- **Docker-Ready** - Full-stack deployment with a single `docker compose up`
 
 ## Project Structure
 
@@ -194,6 +224,37 @@ The `GatewayRegistryService` resolves the correct adapter at runtime based on th
 
 For negative testing scenarios, the mock code is stored in transaction metadata during step 2 and applied as a `PayPal-Mock-Response` header during step 6.
 
+## Google OAuth (Optional)
+
+Dashboard access can be protected with Google sign-in. This is disabled by default — the dashboard is fully open without authentication.
+
+### Enable
+
+Set these variables in `.env`:
+
+```env
+ENABLE_GOOGLE_AUTH=true
+NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=true
+GOOGLE_CLIENT_ID=your-client-id
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3100/api/auth/google/callback
+JWT_SECRET=your-jwt-secret
+FRONTEND_URL=http://localhost:3200
+```
+
+### Google Cloud Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create an OAuth 2.0 Client ID (Web application)
+3. Add `http://localhost:3100/api/auth/google/callback` as an authorized redirect URI
+4. Copy the Client ID and Client Secret to `.env`
+
+### How It Works
+
+When enabled, the frontend `AuthGuard` component checks for a valid JWT token before allowing access to dashboard routes. Unauthenticated users are redirected to the login page, which initiates a Google OAuth flow. The backend issues a JWT after successful Google authentication.
+
+When disabled (`ENABLE_GOOGLE_AUTH=false`), the guard passes all requests through and the dashboard is fully accessible without authentication.
+
 ## Environment Variables
 
 See `.env.example` for the full list. Key variables:
@@ -207,6 +268,13 @@ See `.env.example` for the full list. Key variables:
 | `PAYPAL_CLIENT_SECRET` | No | PayPal sandbox client secret |
 | `PAYPAL_WEBHOOK_ID` | No | PayPal webhook ID for verification |
 | `NGROK_DOMAIN` | No | Static ngrok domain for webhook tunneling |
+| `ENABLE_GOOGLE_AUTH` | No | Enable Google OAuth (`true`/`false`, default `false`) |
+| `NEXT_PUBLIC_ENABLE_GOOGLE_AUTH` | No | Frontend auth flag (must match backend) |
+| `GOOGLE_CLIENT_ID` | No | Google OAuth client ID (required when auth enabled) |
+| `GOOGLE_CLIENT_SECRET` | No | Google OAuth client secret (required when auth enabled) |
+| `GOOGLE_CALLBACK_URL` | No | OAuth callback URL (default: `http://localhost:3100/api/auth/google/callback`) |
+| `JWT_SECRET` | No | JWT signing secret (required when auth enabled) |
+| `FRONTEND_URL` | No | Frontend URL for OAuth redirect (default: `http://localhost:3200`) |
 
 ## Development Rules
 

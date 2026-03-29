@@ -1,5 +1,5 @@
 {
-  "name": "pay-gate-simulator",
+  "name": "paylab",
   "version": "0.1.0",
   "private": true,
   "description": "Multi-gateway payment simulator with sandbox and mock modes",

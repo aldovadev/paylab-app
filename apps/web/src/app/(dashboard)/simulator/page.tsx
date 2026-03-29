@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createCharge, clearChargeResult, clearError } from "@/store/slices/payment-slice";
 import { getScenariosByProvider } from "@/data/simulator-catalog";
-import type { TestScenario } from "@pay-gate-simulator/shared";
-import { PaymentProvider } from "@pay-gate-simulator/shared";
+import type { TestScenario } from "@paylab/shared";
+import { PaymentProvider } from "@paylab/shared";
 import {
   CreditCard,
   ChevronLeft,
@@ -18,6 +18,8 @@ import { StripeLogo, PaypalLogo } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
+import { MagicCard } from "@/components/ui/magic-card";
+import { AuroraText } from "@/components/ui/aurora-text";
 
 export default function SimulatorPage() {
   const dispatch = useAppDispatch();
@@ -129,7 +131,9 @@ export default function SimulatorPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Payment Simulator</h1>
+          <h1 className="text-2xl font-bold">
+            <AuroraText colors={["#06b6d4", "#0891b2", "#22d3ee", "#67e8f9"]}>Payment Simulator</AuroraText>
+          </h1>
           <p className="text-sm text-muted-foreground">
             Test real sandbox payments with Stripe test cards and PayPal sandbox.
           </p>
@@ -184,10 +188,15 @@ export default function SimulatorPage() {
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">Select Payment Gateway</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            <button
-              onClick={() => handleSelectProvider(PaymentProvider.STRIPE)}
-              className="group rounded-lg border border-border bg-card p-6 text-left transition-all hover:border-violet-500 hover:shadow-md"
+            <MagicCard
+              className="rounded-lg border border-border bg-card p-0"
+              gradientColor="#8b5cf6"
+              gradientOpacity={0.15}
             >
+              <button
+                onClick={() => handleSelectProvider(PaymentProvider.STRIPE)}
+                className="w-full rounded-lg p-6 text-left transition-all hover:shadow-md"
+              >
               <div className="flex items-start justify-between">
                 <div className="rounded-md bg-violet-500/10 p-3">
                   <StripeLogo className="h-5 w-auto" />
@@ -200,12 +209,18 @@ export default function SimulatorPage() {
               <p className="mt-1 text-xs text-muted-foreground">
                 Uses real Stripe API in test mode with test PaymentMethod tokens. No real charges.
               </p>
-            </button>
+              </button>
+            </MagicCard>
 
-            <button
-              onClick={() => handleSelectProvider(PaymentProvider.PAYPAL)}
-              className="group rounded-lg border border-border bg-card p-6 text-left transition-all hover:border-blue-500 hover:shadow-md"
+            <MagicCard
+              className="rounded-lg border border-border bg-card p-0"
+              gradientColor="#3b82f6"
+              gradientOpacity={0.15}
             >
+              <button
+                onClick={() => handleSelectProvider(PaymentProvider.PAYPAL)}
+                className="w-full rounded-lg p-6 text-left transition-all hover:shadow-md"
+              >
               <div className="flex items-start justify-between">
                 <div className="rounded-md bg-blue-500/10 p-3">
                   <PaypalLogo className="h-5 w-auto" />
@@ -218,7 +233,8 @@ export default function SimulatorPage() {
               <p className="mt-1 text-xs text-muted-foreground">
                 Uses PayPal Sandbox API. Creates real orders against sandbox environment.
               </p>
-            </button>
+              </button>
+            </MagicCard>
           </div>
         </div>
       )}

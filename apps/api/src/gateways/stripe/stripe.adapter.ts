@@ -12,7 +12,7 @@ import {
   RefundInput,
   RefundResult,
   WebhookEvent,
-} from '@pay-gate-simulator/shared';
+} from '@paylab/shared';
 
 @Injectable()
 export class StripeAdapter implements PaymentGatewayAdapter {

@@ -3,7 +3,7 @@ import { EditableBaseEntity } from '../../database/base-entity';
 import {
   PaymentProvider,
   WebhookEventType,
-} from '@pay-gate-simulator/shared';
+} from '@paylab/shared';
 
 @Entity('webhook_events')
 export class WebhookEventEntity extends EditableBaseEntity {

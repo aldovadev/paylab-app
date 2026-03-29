@@ -8,7 +8,7 @@ import {
   ChargeResult,
   ChargeStatusResult,
   RefundResult,
-} from '@pay-gate-simulator/shared';
+} from '@paylab/shared';
 import { TransactionEntity } from './entities/transaction.entity';
 import { WebhookEventEntity } from './entities/webhook-event.entity';
 import { CreateChargeDto, RefundDto } from './dtos';

@@ -20,7 +20,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@pay-gate-simulator/shared": ["../../packages/shared/src"]
+      "@paylab/shared": ["../../packages/shared/src"]
     }
   },
   "include": [

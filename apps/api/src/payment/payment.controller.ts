@@ -13,7 +13,7 @@ import {
   PaymentProvider,
   PaymentStatus,
   TransactionType,
-} from '@pay-gate-simulator/shared';
+} from '@paylab/shared';
 import { PaymentService } from './payment.service';
 import { CreateChargeDto, RefundDto } from './dtos';
 import { ResponseInterceptor } from '../common/interceptors/response.interceptor';

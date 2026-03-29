@@ -12,7 +12,7 @@ import {
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
-import { PaymentProvider } from '@pay-gate-simulator/shared';
+import { PaymentProvider } from '@paylab/shared';
 import { WebhooksService } from './webhooks.service';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 

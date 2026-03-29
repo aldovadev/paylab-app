@@ -27,7 +27,7 @@ async function bootstrap() {
 
   if (enableSwagger === 'true') {
     const config = new DocumentBuilder()
-      .setTitle('Pay Gate Simulator')
+      .setTitle('PayLab')
       .setDescription('Multi-gateway payment simulator API')
       .setVersion('0.1.0')
       .addTag('Payment', 'Create charges, refunds, and disbursements')
