@@ -5,6 +5,7 @@ import * as Joi from 'joi';
 import { PaymentModule } from './payment/payment.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { GatewaysModule } from './gateways/gateways.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { GatewaysModule } from './gateways/gateways.module';
       isGlobal: true,
       envFilePath: '../../.env',
       validationSchema: Joi.object({
-        APP_NAME: Joi.string().default('pay-gate-simulator'),
+        APP_NAME: Joi.string().default('paylab'),
         APP_ENV: Joi.string().valid('dev', 'staging', 'production').default('dev'),
         APP_PORT: Joi.number().default(3100),
         ENABLE_SWAGGER: Joi.string().default('true'),
@@ -24,6 +25,12 @@ import { GatewaysModule } from './gateways/gateways.module';
         DB_SSL: Joi.string().default('false'),
         REDIS_HOST: Joi.string().default('localhost'),
         REDIS_PORT: Joi.number().default(6379),
+        ENABLE_GOOGLE_AUTH: Joi.string().valid('true', 'false').default('false'),
+        GOOGLE_CLIENT_ID: Joi.string().optional().allow(''),
+        GOOGLE_CLIENT_SECRET: Joi.string().optional().allow(''),
+        GOOGLE_CALLBACK_URL: Joi.string().default('http://localhost:3100/api/auth/google/callback'),
+        JWT_SECRET: Joi.string().default('dev-jwt-secret'),
+        FRONTEND_URL: Joi.string().default('http://localhost:3200'),
       }),
     }),
     TypeOrmModule.forRootAsync({
@@ -44,6 +51,7 @@ import { GatewaysModule } from './gateways/gateways.module';
     GatewaysModule,
     PaymentModule,
     WebhooksModule,
+    AuthModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

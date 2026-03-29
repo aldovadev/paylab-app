@@ -11,7 +11,7 @@ import {
   RefundInput,
   RefundResult,
   WebhookEvent,
-} from '@pay-gate-simulator/shared';
+} from '@paylab/shared';
 
 // PayPal SDK v2 imports
 import {

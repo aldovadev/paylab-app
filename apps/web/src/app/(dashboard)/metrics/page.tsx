@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchMetrics } from "@/store/slices/payment-slice";
 import { cn } from "@/lib/utils";
+import { MagicCard } from "@/components/ui/magic-card";
+import { AuroraText } from "@/components/ui/aurora-text";
 
 export default function MetricsPage() {
   const dispatch = useAppDispatch();
@@ -33,7 +35,9 @@ export default function MetricsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Payment Metrics</h1>
+          <h1 className="text-2xl font-bold">
+            <AuroraText colors={["#06b6d4", "#0891b2", "#22d3ee", "#67e8f9"]}>Payment Metrics</AuroraText>
+          </h1>
           <p className="text-sm text-muted-foreground">
             Success and failure rates across all payment gateways.
           </p>
@@ -74,9 +78,11 @@ export default function MetricsPage() {
           {providers.map((provider) => {
             const m = metrics[provider];
             return (
-              <div
+              <MagicCard
                 key={provider}
                 className="rounded-lg border border-border bg-card p-6 space-y-4"
+                gradientColor="#06b6d4"
+                gradientOpacity={0.1}
               >
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold capitalize">{provider}</h3>
@@ -121,7 +127,7 @@ export default function MetricsPage() {
                     <p className="text-lg font-bold">${m.totalVolume.toFixed(2)}</p>
                   </div>
                 </div>
-              </div>
+              </MagicCard>
             );
           })}
         </div>
@@ -140,9 +146,9 @@ function SummaryCard({
   valueClass?: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <MagicCard className="rounded-lg border border-border bg-card p-4" gradientColor="#06b6d4" gradientOpacity={0.1}>
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className={cn("mt-1 text-2xl font-bold", valueClass)}>{value}</p>
-    </div>
+    </MagicCard>
   );
 }

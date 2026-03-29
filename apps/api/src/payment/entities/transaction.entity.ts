@@ -5,7 +5,7 @@ import {
   PaymentStatus,
   PaymentMethod,
   TransactionType,
-} from '@pay-gate-simulator/shared';
+} from '@paylab/shared';
 
 @Entity('transactions')
 export class TransactionEntity extends EditableBaseEntity {

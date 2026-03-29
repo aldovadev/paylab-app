@@ -1,4 +1,4 @@
-# Copilot Instructions for pay-gate-simulator
+# Copilot Instructions for PayLab
 
 ## Project Overview
 

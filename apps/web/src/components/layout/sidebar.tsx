@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CreditCard,
   ArrowLeftRight,
   Webhook,
   BarChart3,
   Play,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -24,8 +24,8 @@ export function Sidebar() {
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-border bg-sidebar">
       <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-        <CreditCard className="h-6 w-6 text-primary" />
-        <span className="text-lg font-semibold">PayGate Sim</span>
+        <Image src="/logos/paylab.svg" alt="PayLab" width={28} height={28} />
+        <span className="text-lg font-semibold">PayLab</span>
       </div>
       <nav className="flex-1 space-y-1 p-3">
         {navItems.map((item) => {
@@ -48,7 +48,7 @@ export function Sidebar() {
         })}
       </nav>
       <div className="border-t border-border p-4 text-xs text-muted-foreground">
-        Pay Gate Simulator v0.1.0
+        PayLab v0.1.0
       </div>
     </aside>
   );

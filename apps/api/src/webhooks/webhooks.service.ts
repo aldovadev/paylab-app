@@ -5,7 +5,7 @@ import { Response } from 'express';
 import {
   PaymentProvider,
   WebhookEvent,
-} from '@pay-gate-simulator/shared';
+} from '@paylab/shared';
 import { WebhookEventEntity } from '../payment/entities/webhook-event.entity';
 import { GatewayRegistryService } from '../gateways/gateway-registry.service';
 

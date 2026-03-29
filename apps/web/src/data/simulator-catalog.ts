@@ -1,5 +1,5 @@
-import type { TestScenario } from "@pay-gate-simulator/shared";
-import { PaymentProvider, PaymentStatus } from "@pay-gate-simulator/shared";
+import type { TestScenario } from "@paylab/shared";
+import { PaymentProvider, PaymentStatus } from "@paylab/shared";
 
 // Stripe test PaymentMethod tokens
 // See: https://docs.stripe.com/testing#cards

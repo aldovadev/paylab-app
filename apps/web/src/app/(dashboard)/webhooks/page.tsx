@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useWebhookStream } from "@/hooks/use-webhook-stream";
+import { MagicCard } from "@/components/ui/magic-card";
+import { AuroraText } from "@/components/ui/aurora-text";
 
 export default function WebhooksPage() {
   const { events, connected, clearEvents } = useWebhookStream();
@@ -11,7 +13,9 @@ export default function WebhooksPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Webhook Events</h1>
+          <h1 className="text-2xl font-bold">
+            <AuroraText colors={["#06b6d4", "#0891b2", "#22d3ee", "#67e8f9"]}>Webhook Events</AuroraText>
+          </h1>
           <p className="text-sm text-muted-foreground">
             Real-time webhook events from Stripe and PayPal.
           </p>
@@ -37,7 +41,7 @@ export default function WebhooksPage() {
       {/* Events list + detail */}
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Live feed */}
-        <div className="rounded-lg border border-border bg-card">
+        <MagicCard className="rounded-lg border border-border bg-card" gradientColor="#06b6d4" gradientOpacity={0.1}>
           <div className="border-b border-border px-4 py-3">
             <h2 className="text-sm font-semibold">Live Feed ({events.length})</h2>
           </div>
@@ -65,10 +69,10 @@ export default function WebhooksPage() {
               </button>
             ))}
           </div>
-        </div>
+        </MagicCard>
 
         {/* Detail panel */}
-        <div className="rounded-lg border border-border bg-card">
+        <MagicCard className="rounded-lg border border-border bg-card" gradientColor="#06b6d4" gradientOpacity={0.1}>
           <div className="border-b border-border px-4 py-3">
             <h2 className="text-sm font-semibold">Event Detail</h2>
           </div>
@@ -104,7 +108,7 @@ export default function WebhooksPage() {
               </div>
             </div>
           )}
-        </div>
+        </MagicCard>
       </div>
     </div>
   );

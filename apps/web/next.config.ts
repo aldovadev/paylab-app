@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  transpilePackages: ["@pay-gate-simulator/shared"],
+  transpilePackages: ["@paylab/shared"],
   async headers() {
     return [
       {

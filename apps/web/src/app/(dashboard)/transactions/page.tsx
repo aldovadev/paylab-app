@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchTransactions } from "@/store/slices/payment-slice";
 import { format } from "date-fns";
+import { AuroraText } from "@/components/ui/aurora-text";
 
 export default function TransactionsPage() {
   const dispatch = useAppDispatch();
@@ -29,7 +30,9 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Transactions</h1>
+      <h1 className="text-2xl font-bold">
+        <AuroraText colors={["#06b6d4", "#0891b2", "#22d3ee", "#67e8f9"]}>Transactions</AuroraText>
+      </h1>
 
       {/* Filters */}
       <div className="flex gap-4">
