@@ -32,3 +32,8 @@ export enum WebhookEventType {
   REFUND_SUCCEEDED = 'refund.succeeded',
   REFUND_FAILED = 'refund.failed',
 }
+
+export enum CallDirection {
+  OUTBOUND = 'outbound',
+  INBOUND_WEBHOOK = 'inbound_webhook',
+}

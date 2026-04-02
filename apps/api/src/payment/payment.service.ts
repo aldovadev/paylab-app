@@ -14,6 +14,7 @@ import { WebhookEventEntity } from './entities/webhook-event.entity';
 import { CreateChargeDto, RefundDto } from './dtos';
 import { GatewayRegistryService } from '../gateways/gateway-registry.service';
 import { PaypalAdapter } from '../gateways/paypal/paypal.adapter';
+import { ApiCallLogService } from './api-call-log.service';
 
 @Injectable()
 export class PaymentService {
@@ -25,6 +26,7 @@ export class PaymentService {
     @InjectRepository(WebhookEventEntity)
     private readonly webhookEventRepo: Repository<WebhookEventEntity>,
     private readonly gatewayRegistry: GatewayRegistryService,
+    private readonly apiCallLogService: ApiCallLogService,
   ) { }
 
   async createCharge(dto: CreateChargeDto): Promise<ChargeResult> {
@@ -230,5 +232,34 @@ export class PaymentService {
     }
 
     return metrics;
+  }
+
+  async getFlowSummary(externalId: string) {
+    // Primary transaction
+    const transaction = await this.transactionRepo.findOne({
+      where: { externalId },
+    });
+
+    // Related transactions (refunds linked to this charge)
+    const relatedTransactions = await this.transactionRepo.find({
+      where: { relatedChargeId: externalId },
+      order: { createdAt: 'ASC' },
+    });
+
+    // API call logs for this flow
+    const apiCalls = await this.apiCallLogService.getFlowLogs(externalId);
+
+    // Webhook events for this charge
+    const webhookEvents = await this.webhookEventRepo.find({
+      where: { chargeId: externalId },
+      order: { receivedAt: 'ASC' },
+    });
+
+    return {
+      transaction,
+      relatedTransactions,
+      apiCalls,
+      webhookEvents,
+    };
   }
 }

@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiClient from "@/lib/api-client";
+import type { ApiCallLog, FlowSummary, WebhookEvent } from "@paylab/shared";
 
-interface Transaction {
+export interface Transaction {
   id: string;
   provider: string;
   transactionType: string;
@@ -31,6 +32,8 @@ interface PaymentState {
   chargeResult: Record<string, unknown> | null;
   metrics: Record<string, ProviderMetrics>;
   metricsLoading: boolean;
+  flowSummary: FlowSummary | null;
+  flowLoading: boolean;
 }
 
 const initialState: PaymentState = {
@@ -41,6 +44,8 @@ const initialState: PaymentState = {
   chargeResult: null,
   metrics: {},
   metricsLoading: false,
+  flowSummary: null,
+  flowLoading: false,
 };
 
 export const fetchTransactions = createAsyncThunk(
@@ -91,6 +96,14 @@ export const createRefund = createAsyncThunk(
   },
 );
 
+export const fetchFlowSummary = createAsyncThunk(
+  "payment/fetchFlowSummary",
+  async (externalId: string) => {
+    const res = await apiClient.get(`/payments/flow/${externalId}`);
+    return res.data.details.reply as FlowSummary;
+  },
+);
+
 export const paymentSlice = createSlice({
   name: "payment",
   initialState,
@@ -100,6 +113,9 @@ export const paymentSlice = createSlice({
     },
     clearError(state) {
       state.error = null;
+    },
+    clearFlowSummary(state) {
+      state.flowSummary = null;
     },
   },
   extraReducers: (builder) => {
@@ -159,8 +175,20 @@ export const paymentSlice = createSlice({
       .addCase(createRefund.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to create refund";
+      })
+      .addCase(fetchFlowSummary.pending, (state) => {
+        state.flowLoading = true;
+        state.flowSummary = null;
+      })
+      .addCase(fetchFlowSummary.fulfilled, (state, action) => {
+        state.flowLoading = false;
+        state.flowSummary = action.payload;
+      })
+      .addCase(fetchFlowSummary.rejected, (state, action) => {
+        state.flowLoading = false;
+        state.error = action.error.message || "Failed to fetch flow summary";
       });
   },
 });
 
-export const { clearChargeResult, clearError } = paymentSlice.actions;
+export const { clearChargeResult, clearError, clearFlowSummary } = paymentSlice.actions;

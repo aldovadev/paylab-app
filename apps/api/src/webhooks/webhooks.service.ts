@@ -4,10 +4,12 @@ import { Repository } from 'typeorm';
 import { Response } from 'express';
 import {
   PaymentProvider,
+  CallDirection,
   WebhookEvent,
 } from '@paylab/shared';
 import { WebhookEventEntity } from '../payment/entities/webhook-event.entity';
 import { GatewayRegistryService } from '../gateways/gateway-registry.service';
+import { ApiCallLogService } from '../payment/api-call-log.service';
 
 interface SseClient {
   id: string;
@@ -23,13 +25,15 @@ export class WebhooksService {
     @InjectRepository(WebhookEventEntity)
     private readonly webhookEventRepo: Repository<WebhookEventEntity>,
     private readonly gatewayRegistry: GatewayRegistryService,
-  ) {}
+    private readonly apiCallLogService: ApiCallLogService,
+  ) { }
 
   async handleWebhook(
     provider: PaymentProvider,
     headers: Record<string, string>,
     rawBody: string,
   ): Promise<WebhookEvent> {
+    const startTime = Date.now();
     const adapter = this.gatewayRegistry.getAdapter(provider);
     const event = await adapter.verifyWebhook(headers, rawBody);
 
@@ -46,6 +50,19 @@ export class WebhooksService {
 
     await this.webhookEventRepo.save(entity);
     this.logger.log(`Webhook received: ${event.eventType} from ${provider} (verified=${event.verified})`);
+
+    // Log inbound webhook as an API call for the flow timeline
+    this.apiCallLogService.logCall({
+      flowId: event.chargeId || '',
+      provider,
+      direction: CallDirection.INBOUND_WEBHOOK,
+      method: 'POST',
+      endpoint: `/webhooks/${provider}`,
+      requestHeaders: headers as unknown as Record<string, unknown>,
+      requestBody: JSON.parse(rawBody),
+      responseStatus: 200,
+      durationMs: Date.now() - startTime,
+    });
 
     this.broadcastSse(event);
 

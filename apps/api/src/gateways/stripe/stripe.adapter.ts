@@ -5,6 +5,7 @@ import {
   PaymentProvider,
   PaymentStatus,
   WebhookEventType,
+  CallDirection,
   PaymentGatewayAdapter,
   CreateChargeInput,
   ChargeResult,
@@ -13,6 +14,7 @@ import {
   RefundResult,
   WebhookEvent,
 } from '@paylab/shared';
+import { ApiCallLogService } from '../../payment/api-call-log.service';
 
 @Injectable()
 export class StripeAdapter implements PaymentGatewayAdapter {
@@ -20,7 +22,10 @@ export class StripeAdapter implements PaymentGatewayAdapter {
   private readonly logger = new Logger(StripeAdapter.name);
   private stripe: Stripe;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly apiCallLogService: ApiCallLogService,
+  ) {
     const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (secretKey) {
       this.stripe = new Stripe(secretKey);
@@ -47,8 +52,25 @@ export class StripeAdapter implements PaymentGatewayAdapter {
       params.automatic_payment_methods = { enabled: true };
     }
 
+    const startTime = Date.now();
+    const endpoint = '/v1/payment_intents';
+
     try {
       const paymentIntent = await this.stripe.paymentIntents.create(params);
+      const lastResp = (paymentIntent as any).lastResponse;
+
+      this.apiCallLogService.logCall({
+        flowId: paymentIntent.id,
+        provider: PaymentProvider.STRIPE,
+        direction: CallDirection.OUTBOUND,
+        method: 'POST',
+        endpoint,
+        requestBody: params as unknown as Record<string, unknown>,
+        responseStatus: lastResp?.statusCode || 200,
+        responseHeaders: lastResp?.headers as Record<string, unknown> || undefined,
+        responseBody: paymentIntent as unknown as Record<string, unknown>,
+        durationMs: Date.now() - startTime,
+      });
 
       return {
         chargeId: paymentIntent.id,
@@ -63,6 +85,24 @@ export class StripeAdapter implements PaymentGatewayAdapter {
     } catch (err) {
       if (err instanceof Stripe.errors.StripeCardError) {
         this.logger.warn(`Card declined: ${err.code} - ${err.message}`);
+
+        this.apiCallLogService.logCall({
+          flowId: err.payment_intent?.id || '',
+          provider: PaymentProvider.STRIPE,
+          direction: CallDirection.OUTBOUND,
+          method: 'POST',
+          endpoint,
+          requestBody: params as unknown as Record<string, unknown>,
+          responseStatus: err.statusCode || 402,
+          responseBody: {
+            type: err.type,
+            code: err.code,
+            declineCode: err.decline_code,
+            message: err.message,
+          },
+          durationMs: Date.now() - startTime,
+        });
+
         return {
           chargeId: err.payment_intent?.id || '',
           provider: PaymentProvider.STRIPE,
@@ -88,7 +128,22 @@ export class StripeAdapter implements PaymentGatewayAdapter {
   async getChargeStatus(chargeId: string): Promise<ChargeStatusResult> {
     this.ensureInitialized();
 
+    const startTime = Date.now();
+    const endpoint = `/v1/payment_intents/${chargeId}`;
     const paymentIntent = await this.stripe.paymentIntents.retrieve(chargeId);
+    const lastResp = (paymentIntent as any).lastResponse;
+
+    this.apiCallLogService.logCall({
+      flowId: chargeId,
+      provider: PaymentProvider.STRIPE,
+      direction: CallDirection.OUTBOUND,
+      method: 'GET',
+      endpoint,
+      responseStatus: lastResp?.statusCode || 200,
+      responseHeaders: lastResp?.headers as Record<string, unknown> || undefined,
+      responseBody: paymentIntent as unknown as Record<string, unknown>,
+      durationMs: Date.now() - startTime,
+    });
 
     return {
       chargeId: paymentIntent.id,
@@ -103,10 +158,26 @@ export class StripeAdapter implements PaymentGatewayAdapter {
   async refund(input: RefundInput): Promise<RefundResult> {
     this.ensureInitialized();
 
+    const startTime = Date.now();
+    const endpoint = '/v1/refunds';
     const refund = await this.stripe.refunds.create({
       payment_intent: input.chargeId,
       amount: input.amount ? Math.round(input.amount * 100) : undefined,
       reason: input.reason as Stripe.RefundCreateParams.Reason || undefined,
+    });
+    const lastResp = (refund as any).lastResponse;
+
+    this.apiCallLogService.logCall({
+      flowId: input.chargeId,
+      provider: PaymentProvider.STRIPE,
+      direction: CallDirection.OUTBOUND,
+      method: 'POST',
+      endpoint,
+      requestBody: { paymentIntent: input.chargeId, amount: input.amount, reason: input.reason },
+      responseStatus: lastResp?.statusCode || 200,
+      responseHeaders: lastResp?.headers as Record<string, unknown> || undefined,
+      responseBody: refund as unknown as Record<string, unknown>,
+      durationMs: Date.now() - startTime,
     });
 
     return {

@@ -3,6 +3,7 @@ import {
   PaymentStatus,
   PaymentMethod,
   WebhookEventType,
+  CallDirection,
 } from '../enums';
 
 // -- Charge --
@@ -102,4 +103,51 @@ export interface PaymentGatewayAdapter {
     headers: Record<string, string>,
     body: string,
   ): Promise<WebhookEvent>;
+}
+
+// -- API Call Log --
+
+export interface ApiCallLog {
+  id: string;
+  flowId: string;
+  provider: PaymentProvider;
+  direction: CallDirection;
+  method: string;
+  endpoint: string;
+  requestHeaders?: Record<string, unknown>;
+  requestBody?: Record<string, unknown>;
+  responseStatus?: number;
+  responseHeaders?: Record<string, unknown>;
+  responseBody?: Record<string, unknown>;
+  durationMs?: number;
+  createdAt: string;
+}
+
+// -- Flow Summary --
+
+export interface FlowSummary {
+  transaction: {
+    id: string;
+    provider: string;
+    transactionType: string;
+    status: string;
+    externalId: string;
+    amount: number;
+    currency: string;
+    description?: string;
+    metadata?: Record<string, string>;
+    createdAt: string;
+  };
+  relatedTransactions: {
+    id: string;
+    provider: string;
+    transactionType: string;
+    status: string;
+    externalId: string;
+    amount: number;
+    currency: string;
+    createdAt: string;
+  }[];
+  apiCalls: ApiCallLog[];
+  webhookEvents: WebhookEvent[];
 }

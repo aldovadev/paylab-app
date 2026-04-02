@@ -4,6 +4,7 @@ import {
   PaymentProvider,
   PaymentStatus,
   WebhookEventType,
+  CallDirection,
   PaymentGatewayAdapter,
   CreateChargeInput,
   ChargeResult,
@@ -12,6 +13,7 @@ import {
   RefundResult,
   WebhookEvent,
 } from '@paylab/shared';
+import { ApiCallLogService } from '../../payment/api-call-log.service';
 
 // PayPal SDK v2 imports
 import {
@@ -30,7 +32,10 @@ export class PaypalAdapter implements PaymentGatewayAdapter {
   private readonly logger = new Logger(PaypalAdapter.name);
   private client: Client | null = null;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly apiCallLogService: ApiCallLogService,
+  ) {
     const clientId = this.configService.get<string>('PAYPAL_CLIENT_ID');
     const clientSecret = this.configService.get<string>('PAYPAL_CLIENT_SECRET');
 
@@ -60,6 +65,9 @@ export class PaypalAdapter implements PaymentGatewayAdapter {
     const createPhaseCodes = ['INTERNAL_SERVER_ERROR', 'PERMISSION_DENIED'];
     const isCreatePhase = mockCode && createPhaseCodes.includes(mockCode);
 
+    const startTime = Date.now();
+    const endpoint = '/v2/checkout/orders';
+
     try {
       const response = await ordersController.createOrder({
         body: {
@@ -86,12 +94,25 @@ export class PaypalAdapter implements PaymentGatewayAdapter {
       });
 
       const order = response.result;
+      const flowId = (order as any).id || '';
       const approvalLink = (order as any).links?.find(
         (l: { rel: string }) => l.rel === 'approve',
       );
 
+      this.apiCallLogService.logCall({
+        flowId,
+        provider: PaymentProvider.PAYPAL,
+        direction: CallDirection.OUTBOUND,
+        method: 'POST',
+        endpoint,
+        requestBody: { intent: 'CAPTURE', amount: input.amount, currency: input.currency },
+        responseStatus: 201,
+        responseBody: order as unknown as Record<string, unknown>,
+        durationMs: Date.now() - startTime,
+      });
+
       return {
-        chargeId: (order as any).id || '',
+        chargeId: flowId,
         provider: PaymentProvider.PAYPAL,
         status: this.mapPaypalOrderStatus((order as any).status || ''),
         amount: input.amount,
@@ -105,6 +126,19 @@ export class PaypalAdapter implements PaymentGatewayAdapter {
         const details = (error.result as any)?.details;
         const issue = details?.[0]?.issue || error.message;
         this.logger.warn(`PayPal createOrder failed: ${issue}`);
+
+        this.apiCallLogService.logCall({
+          flowId: '',
+          provider: PaymentProvider.PAYPAL,
+          direction: CallDirection.OUTBOUND,
+          method: 'POST',
+          endpoint,
+          requestBody: { intent: 'CAPTURE', amount: input.amount, currency: input.currency },
+          responseStatus: error.statusCode,
+          responseBody: error.result as unknown as Record<string, unknown>,
+          durationMs: Date.now() - startTime,
+        });
+
         return {
           chargeId: '',
           provider: PaymentProvider.PAYPAL,
@@ -127,6 +161,8 @@ export class PaypalAdapter implements PaymentGatewayAdapter {
     this.ensureInitialized();
 
     const ordersController = new OrdersController(this.client!);
+    const startTime = Date.now();
+    const endpoint = `/v2/checkout/orders/${orderId}/capture`;
 
     try {
       const response = await ordersController.captureOrder({
@@ -139,6 +175,18 @@ export class PaypalAdapter implements PaymentGatewayAdapter {
 
       const capture = (order as any).purchaseUnits?.[0]?.payments?.captures?.[0];
       const amount = capture?.amount || (order as any).purchaseUnits?.[0]?.amount;
+
+      this.apiCallLogService.logCall({
+        flowId: orderId,
+        provider: PaymentProvider.PAYPAL,
+        direction: CallDirection.OUTBOUND,
+        method: 'POST',
+        endpoint,
+        requestBody: { orderId, mockCode },
+        responseStatus: 201,
+        responseBody: order as unknown as Record<string, unknown>,
+        durationMs: Date.now() - startTime,
+      });
 
       return {
         chargeId: (order as any).id || orderId,
@@ -155,6 +203,19 @@ export class PaypalAdapter implements PaymentGatewayAdapter {
         const issue = details?.[0]?.issue || error.message;
         const description = details?.[0]?.description || '';
         this.logger.warn(`PayPal captureOrder failed: ${issue} - ${description}`);
+
+        this.apiCallLogService.logCall({
+          flowId: orderId,
+          provider: PaymentProvider.PAYPAL,
+          direction: CallDirection.OUTBOUND,
+          method: 'POST',
+          endpoint,
+          requestBody: { orderId, mockCode },
+          responseStatus: error.statusCode,
+          responseBody: error.result as unknown as Record<string, unknown>,
+          durationMs: Date.now() - startTime,
+        });
+
         return {
           chargeId: orderId,
           provider: PaymentProvider.PAYPAL,
@@ -178,8 +239,22 @@ export class PaypalAdapter implements PaymentGatewayAdapter {
     this.ensureInitialized();
 
     const ordersController = new OrdersController(this.client!);
+    const startTime = Date.now();
+    const endpoint = `/v2/checkout/orders/${chargeId}`;
+
     const response = await ordersController.getOrder({ id: chargeId });
     const order = response.result;
+
+    this.apiCallLogService.logCall({
+      flowId: chargeId,
+      provider: PaymentProvider.PAYPAL,
+      direction: CallDirection.OUTBOUND,
+      method: 'GET',
+      endpoint,
+      responseStatus: 200,
+      responseBody: order as unknown as Record<string, unknown>,
+      durationMs: Date.now() - startTime,
+    });
 
     const amount = (order as any).purchaseUnits?.[0]?.amount;
     return {
@@ -197,6 +272,9 @@ export class PaypalAdapter implements PaymentGatewayAdapter {
 
     // PayPal refunds against a capture ID, not order ID
     const paymentsController = new PaymentsController(this.client!);
+    const startTime = Date.now();
+    const endpoint = `/v2/payments/captures/${input.chargeId}/refund`;
+
     const response = await paymentsController.refundCapturedPayment({
       captureId: input.chargeId,
       body: {
@@ -211,6 +289,19 @@ export class PaypalAdapter implements PaymentGatewayAdapter {
     });
 
     const refund = response.result;
+
+    this.apiCallLogService.logCall({
+      flowId: input.chargeId,
+      provider: PaymentProvider.PAYPAL,
+      direction: CallDirection.OUTBOUND,
+      method: 'POST',
+      endpoint,
+      requestBody: { captureId: input.chargeId, amount: input.amount, reason: input.reason },
+      responseStatus: 201,
+      responseBody: refund as unknown as Record<string, unknown>,
+      durationMs: Date.now() - startTime,
+    });
+
     return {
       refundId: (refund as any).id || '',
       chargeId: input.chargeId,

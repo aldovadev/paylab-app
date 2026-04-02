@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchTransactions } from "@/store/slices/payment-slice";
 import { format } from "date-fns";
 import { AuroraText } from "@/components/ui/aurora-text";
+import { Eye } from "lucide-react";
 
 export default function TransactionsPage() {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { transactions, totalCount, loading } = useAppSelector((s) => s.payment);
   const [page, setPage] = useState(1);
@@ -75,27 +78,27 @@ export default function TransactionsPage() {
               <th className="px-4 py-3 text-left font-medium">Amount</th>
               <th className="px-4 py-3 text-left font-medium">External ID</th>
               <th className="px-4 py-3 text-left font-medium">Date</th>
+              <th className="px-4 py-3 text-left font-medium">Flow</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   Loading...
                 </td>
               </tr>
             )}
             {!loading && (!transactions || transactions.length === 0) && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   No transactions found
                 </td>
               </tr>
             )}
             {(transactions ?? []).map((tx) => (
-              <>
+              <Fragment key={tx.id}>
                 <tr
-                  key={tx.id}
                   onClick={() => setExpandedId(expandedId === tx.id ? null : tx.id)}
                   className="cursor-pointer border-b border-border hover:bg-muted/30 transition-colors"
                 >
@@ -103,15 +106,14 @@ export default function TransactionsPage() {
                   <td className="px-4 py-3">{tx.transactionType}</td>
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        tx.status === "succeeded"
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${tx.status === "succeeded"
                           ? "bg-green-500/10 text-green-500"
                           : tx.status === "failed"
                             ? "bg-red-500/10 text-red-500"
                             : tx.status === "pending" || tx.status === "processing"
                               ? "bg-yellow-500/10 text-yellow-500"
                               : "bg-muted text-muted-foreground"
-                      }`}
+                        }`}
                     >
                       {tx.status}
                     </span>
@@ -121,10 +123,22 @@ export default function TransactionsPage() {
                   </td>
                   <td className="px-4 py-3 font-mono text-xs">{tx.externalId}</td>
                   <td className="px-4 py-3">{format(new Date(tx.createdAt), "MMM d, HH:mm:ss")}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/transactions/${tx.externalId}`);
+                      }}
+                      className="flex h-7 w-7 items-center justify-center rounded-md border border-input transition-colors hover:bg-muted"
+                      title="View API flow"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </button>
+                  </td>
                 </tr>
                 {expandedId === tx.id && (
                   <tr key={`${tx.id}-detail`}>
-                    <td colSpan={6} className="bg-muted/20 px-4 py-3">
+                    <td colSpan={7} className="bg-muted/20 px-4 py-3">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="mb-1 text-xs font-medium text-muted-foreground">Raw Request</p>
@@ -142,7 +156,7 @@ export default function TransactionsPage() {
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>

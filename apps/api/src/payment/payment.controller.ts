@@ -24,7 +24,7 @@ import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 @UseInterceptors(ResponseInterceptor)
 @UseFilters(HttpExceptionFilter)
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(private readonly paymentService: PaymentService) { }
 
   @Post('charge')
   @ApiOperation({ summary: 'Create a new charge/payment' })
@@ -90,5 +90,11 @@ export class PaymentController {
   @ApiQuery({ name: 'provider', enum: PaymentProvider, required: false })
   getMetrics(@Query('provider') provider?: PaymentProvider) {
     return this.paymentService.getMetrics(provider);
+  }
+
+  @Get('flow/:externalId')
+  @ApiOperation({ summary: 'Get full flow summary for a charge (API calls, webhooks, related txns)' })
+  getFlowSummary(@Param('externalId') externalId: string) {
+    return this.paymentService.getFlowSummary(externalId);
   }
 }
