@@ -9,6 +9,7 @@ RUN npm ci
 
 FROM base AS builder
 WORKDIR /app
+RUN corepack enable
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx -w packages/shared tsc
