@@ -25,6 +25,23 @@ import { AuthModule } from './auth/auth.module';
         DB_SSL: Joi.string().default('false'),
         REDIS_HOST: Joi.string().default('localhost'),
         REDIS_PORT: Joi.number().default(6379),
+        // Optional so the app still boots for PayPal-only use, but typed so a malformed
+        // key is caught at startup instead of surfacing as a 500 on the first charge.
+        STRIPE_SECRET_KEY: Joi.string()
+          .pattern(/^(sk|rk)_(test|live)_/)
+          .optional()
+          .allow('')
+          .messages({
+            'string.pattern.base':
+              'STRIPE_SECRET_KEY must start with sk_test_, sk_live_, rk_test_ or rk_live_',
+          }),
+        STRIPE_WEBHOOK_SECRET: Joi.string()
+          .pattern(/^whsec_/)
+          .optional()
+          .allow('')
+          .messages({
+            'string.pattern.base': 'STRIPE_WEBHOOK_SECRET must start with whsec_',
+          }),
         ENABLE_GOOGLE_AUTH: Joi.string().valid('true', 'false').default('false'),
         GOOGLE_CLIENT_ID: Joi.string().optional().allow(''),
         GOOGLE_CLIENT_SECRET: Joi.string().optional().allow(''),

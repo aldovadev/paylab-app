@@ -41,6 +41,7 @@ export class PaymentService {
       description: dto.description,
       metadata: dto.metadata,
       returnUrl: dto.returnUrl,
+      idempotencyKey: dto.idempotencyKey,
     });
 
     await this.transactionRepo.save({

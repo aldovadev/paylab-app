@@ -1,11 +1,14 @@
-import { Entity, Column, Index } from 'typeorm';
+import { Entity, Column, Index, Unique } from 'typeorm';
 import { EditableBaseEntity } from '../../database/base-entity';
 import {
   PaymentProvider,
   WebhookEventType,
 } from '@paylab/shared';
 
+// Providers retry webhooks until they get a 2xx, so the same event_id arrives more than once.
+// Scoped by provider because event ids are only unique within a provider.
 @Entity('webhook_events')
+@Unique('uq_webhook_events_provider_event_id', ['provider', 'eventId'])
 export class WebhookEventEntity extends EditableBaseEntity {
   @Column({ type: 'enum', enum: PaymentProvider, name: 'provider' })
   @Index()

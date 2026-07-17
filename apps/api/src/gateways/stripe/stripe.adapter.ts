@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
 import Stripe from 'stripe';
 import {
   PaymentProvider,
@@ -52,11 +53,17 @@ export class StripeAdapter implements PaymentGatewayAdapter {
       params.automatic_payment_methods = { enabled: true };
     }
 
+    // A retried POST without this key creates a second PaymentIntent and charges twice.
+    // A caller-supplied key makes client retries safe; the fallback only covers SDK-internal retries.
+    const idempotencyKey = input.idempotencyKey || randomUUID();
+
     const startTime = Date.now();
     const endpoint = '/v1/payment_intents';
 
     try {
-      const paymentIntent = await this.stripe.paymentIntents.create(params);
+      const paymentIntent = await this.stripe.paymentIntents.create(params, {
+        idempotencyKey,
+      });
       const lastResp = (paymentIntent as any).lastResponse;
 
       this.apiCallLogService.logCall({
@@ -78,6 +85,7 @@ export class StripeAdapter implements PaymentGatewayAdapter {
         status: this.mapStripeStatus(paymentIntent.status),
         amount: input.amount,
         currency: input.currency,
+        redirectUrl: this.nextActionUrl(paymentIntent),
         clientSecret: paymentIntent.client_secret || undefined,
         rawResponse: paymentIntent as unknown as Record<string, unknown>,
         createdAt: new Date().toISOString(),
@@ -215,6 +223,11 @@ export class StripeAdapter implements PaymentGatewayAdapter {
     if (!this.stripe) {
       throw new Error('Stripe SDK not initialized. Set STRIPE_SECRET_KEY in environment.');
     }
+  }
+
+  // Set when the card needs 3DS/SCA. Without it a requires_action intent has nowhere to send the payer.
+  private nextActionUrl(paymentIntent: Stripe.PaymentIntent): string | undefined {
+    return paymentIntent.next_action?.redirect_to_url?.url || undefined;
   }
 
   private mapStripeStatus(status: string): PaymentStatus {
