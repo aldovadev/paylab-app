@@ -18,6 +18,9 @@ export interface CreateChargeInput {
   description?: string;
   metadata?: Record<string, string>;
   returnUrl?: string;
+  // Caller-supplied key so a retried request cannot double charge.
+  // Generated per call when omitted, which only covers SDK-internal retries.
+  idempotencyKey?: string;
 }
 
 export interface ChargeResult {

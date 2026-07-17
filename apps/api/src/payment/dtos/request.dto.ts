@@ -52,6 +52,16 @@ export class CreateChargeDto {
   @IsString()
   @IsOptional()
   returnUrl?: string;
+
+  @ApiPropertyOptional({
+    example: 'order-4821-attempt-1',
+    description:
+      'Idempotency key. Replaying the same key returns the original charge instead of creating a second one. Generated server-side if omitted.',
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  idempotencyKey?: string;
 }
 
 export class RefundDto {
